@@ -76,6 +76,7 @@ namespace PortMap
 			pm.DidFinishWork -= new PortMapper.PMDidFinishWork(PortMapper_DidFinishWork);
 			pm.WillStartSearchForRouter -= new PortMapper.PMWillStartSearchForRouter(PortMapper_WillStartSearchForRouter);
 			pm.DidFinishSearchForRouter -= new PortMapper.PMDidFinishSearchForRouter(PortMapper_DidFinishSearchForRouter);
+			pm.DidChangeMappingStatus -= new PortMapper.PMDidChangeMappingStatus(PortMapper_DidChangeMappingStatus);
 			pm.ExternalIPAddressDidChange -= new PortMapper.PMExternalIPAddressDidChange(PortMapper_ExternalIPAddressDidChange);
 
 			pm.StopBlocking();
