@@ -1,6 +1,6 @@
 #summary Information about this project
 
-= Introduction =
+
 
 This library uses the [http://miniupnp.free.fr/ MiniUPnP library], and the code is based on [http://code.google.com/p/tcmportmapper/  TCMPortMapper].
 
