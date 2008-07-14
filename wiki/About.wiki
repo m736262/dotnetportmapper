@@ -1,0 +1,7 @@
+#summary Information about this project
+
+= Introduction =
+
+This library uses the [http://miniupnp.free.fr/ MiniUPnP library], and the code is based on [http://code.google.com/p/tcmportmapper/  TCMPortMapper].
+
+It was created by Robbie Hanson of [http://www.deusty.com Deusty Designs] because he found TCMPortMapper to be so useful and simple, and because a Windows equivalent didn't seem to exist.  In porting the framework to Windows, Robbie helped to port the libnatpmp library to Windows, and helped in creating dll versions of libnatpmp and miniupnp.
