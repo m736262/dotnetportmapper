@@ -371,11 +371,11 @@ namespace TCMPortMapper
 
 					if ((transportProtocol & PortMappingTransportProtocol.UDP) > 0)
 					{
-						existingMappingsUdpDict.Add(ePort, existingPM);
+						existingMappingsUdpDict[ePort] = existingPM;
 					}
 					if ((transportProtocol & PortMappingTransportProtocol.TCP) > 0)
 					{
-						existingMappingsTcpDict.Add(ePort, existingPM);
+						existingMappingsTcpDict[ePort] = existingPM;
 					}
 
 					DebugLog.WriteLine("Existing UPnP: {0}: {1} {2}->{3}:{4} ({5})",
@@ -580,7 +580,7 @@ namespace TCMPortMapper
 			
 			bool didFail = false;
 
-			devlistP = MiniUPnP.upnpDiscover(2000, IntPtr.Zero, IntPtr.Zero);
+			devlistP = MiniUPnP.upnpDiscover(3000, IntPtr.Zero, IntPtr.Zero);
 			if (devlistP == IntPtr.Zero)
 			{
 				DebugLog.WriteLine("UPnP: No IDG Device found on the network (1)");
