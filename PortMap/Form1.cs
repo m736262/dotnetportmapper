@@ -231,6 +231,8 @@ namespace PortMap
 
 		private void PortMapper_ExternalIPAddressDidChange(PortMapper sender, System.Net.IPAddress ip)
 		{
+			Console.WriteLine("PortMapper_ExternalIPAddressDidChange");
+
 			UpdateTagLine();
 		}
 
