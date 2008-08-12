@@ -334,11 +334,24 @@ namespace TCMPortMapper
 				rHost[0] = 0;
 				duration[0] = 0;
 
-				r = MiniUPnP.UPNP_GetGenericPortMappingEntry(urls.controlURL, igddata.serviceType,
-				                                             index,
-				                                             extPort, intClient, intPort,
-															 protocol, desc, enabled,
-															 rHost, duration);
+				r = MiniUPnP.UPNPCOMMAND_UNKNOWN_ERROR;
+				try
+				{
+					r = MiniUPnP.UPNP_GetGenericPortMappingEntry(urls.controlURL, igddata.ServiceType,
+																 index,
+																 extPort, intClient, intPort,
+																 protocol, desc, enabled,
+																 rHost, duration);
+				}
+				catch (AccessViolationException)
+				{
+					// I have no idea why the above method sometimes throws an AccessException.
+					// The odd part about it is that all the data gets marshaled over and back properly.
+					// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+					DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_GetGenericPortMappingEntry");
+					
+					r = MiniUPnP.UPNPCOMMAND_SUCCESS;
+				}
 
 				if (r == MiniUPnP.UPNPCOMMAND_SUCCESS)
 				{
@@ -427,7 +440,7 @@ namespace TCMPortMapper
 					}
 					else
 					{
-						udpErrCode = MiniUPnP.UPNP_AddPortMapping(urls.controlURL, igddata.serviceType,
+						udpErrCode = MiniUPnP.UPNP_AddPortMapping(urls.controlURL, igddata.ServiceType,
 																  extPortStr, intPortStr, intClient, description, "UDP");
 						DebugLog.WriteLine("UPnP: AddPortMapping: UDP: result = {0}", udpErrCode);
 					}
@@ -444,7 +457,7 @@ namespace TCMPortMapper
 					}
 					else
 					{
-						tcpErrCode = MiniUPnP.UPNP_AddPortMapping(urls.controlURL, igddata.serviceType,
+						tcpErrCode = MiniUPnP.UPNP_AddPortMapping(urls.controlURL, igddata.ServiceType,
 																  extPortStr, intPortStr, intClient, description, "TCP");
 						DebugLog.WriteLine("UPnP: AddPortMapping: TCP: result = {0}", tcpErrCode);
 					}
@@ -455,12 +468,12 @@ namespace TCMPortMapper
 				if (udpResult && !tcpResult)
 				{
 					DebugLog.WriteLine("Deleting UDP mapping");
-					MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.serviceType, extPortStr, "UDP");
+					MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
 				}
 				if (tcpResult && !udpResult)
 				{
 					DebugLog.WriteLine("Deleting TCP mapping");
-					MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.serviceType, extPortStr, "TCP");
+					MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
 				}
 
 				if (udpResult && tcpResult)
@@ -543,14 +556,14 @@ namespace TCMPortMapper
 
 			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.UDP) > 0 && !udpMappingStolen)
 			{
-				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.serviceType, extPortStr, "UDP");
+				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
 				
 				DebugLog.WriteLine("UPnP: RemovePortMapping: UDP: result = {0}", result);
 				udpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
 			}
 			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.TCP) > 0 && !tcpMappingStolen)
 			{
-				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.serviceType, extPortStr, "TCP");
+				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
 
 				DebugLog.WriteLine("UPnP: RemovePortMapping: TCP: result = {0}", result);
 				tcpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
@@ -638,27 +651,63 @@ namespace TCMPortMapper
 					String url = descURLs[i];
 					DebugLog.WriteLine("UPnP: Trying URL: {0}", url);
 
-					int r = MiniUPnP.UPNP_GetIGDFromUrl(url, ref urls, ref igddata, lanAddr, lanAddr.Length);
+					// Reset service type.
+					// This will help us determine of the exception below can safely be ignored.
+					igddata.ServiceType = null;
+
+					int r = 0;
+					try
+					{
+						r = MiniUPnP.UPNP_GetIGDFromUrl(url, ref urls, ref igddata, lanAddr, lanAddr.Length);
+					}
+					catch(AccessViolationException)
+					{
+						// I have no idea why the above method sometimes throws an AccessException.
+						// The odd part about it is that all the data gets marshaled over and back properly.
+						// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+						DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_GetIGDFromUrl");
+
+						if (igddata.ServiceType != null)
+						{
+							r = 1;
+						}
+					}
+
 					if (r == 1)
 					{
-						r = MiniUPnP.UPNP_GetExternalIPAddress(urls.controlURL, igddata.serviceType, externalAddr);
+						r = MiniUPnP.UPNPCOMMAND_UNKNOWN_ERROR;
+						try
+						{
+							r = MiniUPnP.UPNP_GetExternalIPAddress(urls.controlURL, igddata.ServiceType, externalAddr);
+						}
+						catch(AccessViolationException)
+						{
+							// I have no idea why the above method sometimes throws an AccessException.
+							// The odd part about it is that all the data gets marshaled over and back properly.
+							// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+							DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_GetExternalIPAddress");
+
+							if (externalAddr[0] != 0)
+							{
+								r = MiniUPnP.UPNPCOMMAND_SUCCESS;
+							}
+						}
+
 						if (r != MiniUPnP.UPNPCOMMAND_SUCCESS)
 						{
 							DebugLog.WriteLine("UPnP: GetExternalIPAddress returned {0}", r);
 						}
 						else
 						{
-							try
+							IPAddress externalIP;
+							IPAddress.TryParse(MiniUPnP.NullTerminatedArrayToString(externalAddr), out externalIP);
+
+							if(externalIP != null)
 							{
-								IPAddress externalIP = IPAddress.Parse(MiniUPnP.NullTerminatedArrayToString(externalAddr));
 								OnDidGetExternalIPAddress(externalIP);
 
 								foundIDGDevice = true;
 								didFail = false;
-							}
-							catch(Exception e)
-							{
-								DebugLog.WriteLine("UPnP: Exception parsing external IP: {0}", e);
 							}
 						}
 					}
@@ -670,7 +719,17 @@ namespace TCMPortMapper
 					didFail = true;
 				}
 
-				MiniUPnP.freeUPNPDevlist(devlistP);
+				try
+				{
+					MiniUPnP.freeUPNPDevlist(devlistP);
+				}
+				catch(AccessViolationException)
+				{
+					// I have no idea why the above method sometimes throws an AccessException.
+					// The odd part about it is that all the data gets marshaled over and back properly.
+					// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+					DebugLog.WriteLine("Ignoring exception from method MiniUPnP.freeUPNPDevlist");
+				}
 			}
 
 			Monitor.Exit(multiThreadLock);

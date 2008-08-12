@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace TCMPortMapper
 {
@@ -26,7 +27,7 @@ namespace TCMPortMapper
 			}
 		}
 
-		[StructLayout(LayoutKind.Sequential)]
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 		public struct UPNPUrls
 		{
 			public String controlURL;
@@ -34,40 +35,58 @@ namespace TCMPortMapper
 			public String controlURL_CIF;
 		}
 
-		[StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
-		public unsafe struct IGDdatas
+		[StructLayout(LayoutKind.Sequential, Size = 1796, CharSet = CharSet.Ansi)]
+		public struct IGDdatas
 		{
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String cureltname;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String urlbase;
 
-			private int level;
-			
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			private Int32 level;
+
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String controlurl_CIF;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String eventsuburl_CIF;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String scpdurl_CIF;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String servicetype_CIF;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String controlurl;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String eventsuburl;
 
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String scpdurl;
 			
-			[MarshalAs(UnmanagedType.ByValTStr, SizeConst=MINIUPNPC_URL_MAXSIZE)]
-			public String serviceType;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
+			private String serviceType;
+
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
+			private String controlurl_tmp;
+
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
+			private String eventsuburl_tmp;
+
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
+			private String scpdurl_tmp;
+
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
+			private String servicetype_tmp;
+
+			public String ServiceType
+			{
+				get { return serviceType; }
+				set { serviceType = value; }
+			}
 		}
 
 		/// <summary>
@@ -89,25 +108,25 @@ namespace TCMPortMapper
 		///		A pointer to a UPNPDev structure. Free this when done.
 		///		Use the PtrToUPNPDev method to convert to a UPNPDev structure.
 		/// </returns>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr upnpDiscover([In] int delay,
-		                                         [In] String multicastif,
-		                                         [In] String minissdpdsock);
+												 [In] String multicastif,
+												 [In] String minissdpdsock);
 
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr upnpDiscover([In] int delay,
-		                                         [In] IntPtr multicastif,
-		                                         [In] String minissdpdsock);
+												 [In] IntPtr multicastif,
+												 [In] String minissdpdsock);
 
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr upnpDiscover([In] int delay,
-		                                         [In] String multicastif,
-		                                         [In] IntPtr minissdpdsock);
+												 [In] String multicastif,
+												 [In] IntPtr minissdpdsock);
 
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr upnpDiscover([In] int delay,
-		                                         [In] IntPtr multicastif,
-		                                         [In] IntPtr minissdpdsock);
+												 [In] IntPtr multicastif,
+												 [In] IntPtr minissdpdsock);
 
 		/// <summary>
 		/// frees list returned by upnpDiscover()
@@ -115,7 +134,7 @@ namespace TCMPortMapper
 		/// <param name="devlistP">
 		///		IntPtr (pointer to UPNPDev structure) as returned by upnpDiscover().
 		/// </param>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern void freeUPNPDevlist([In] IntPtr devlistP);
 
 		/// <summary>
@@ -130,12 +149,12 @@ namespace TCMPortMapper
 		/// <param name="lanAddr"></param>
 		/// <param name="lanAddrLength"></param>
 		/// <returns></returns>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int UPNP_GetIGDFromUrl([In] String rootDescUrl,
-		                                            [In, Out] ref UPNPUrls urls,
-		                                            [In, Out] ref IGDdatas data,
-		                                            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex=4)] byte[] lanAddr,
-		                                            [In] int lanAddrLength);
+													[In, Out] ref UPNPUrls urls,
+													[In, Out] ref IGDdatas datas,
+													[MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] lanAddr,
+													[In] int lanAddrLength);
 
 		/// <summary>
 		/// Extracts the external IP address.
@@ -154,15 +173,15 @@ namespace TCMPortMapper
 		///		402 Invalid Args - See UPnP Device Architecture section on Control.
 		///		501 Action Failed - See UPnP Device Architecture section on Control.
 		/// </returns>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int UPNP_GetExternalIPAddress([In] String controlURL,
-		                                                   [In] String serviceType,
-		                                                   [MarshalAs(UnmanagedType.LPArray, SizeConst=16)] byte[] externalIPAddr);
+														   [In] String serviceType,
+														   [In, Out, MarshalAs(UnmanagedType.LPArray, SizeConst = 16)] byte[] externalIPAddr);
 
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int UPNP_GetExternalIPAddress([In] String controlURL,
-		                                                   [MarshalAs(UnmanagedType.LPArray, SizeConst=MINIUPNPC_URL_MAXSIZE)] byte[] serviceType,
-		                                                   [MarshalAs(UnmanagedType.LPArray, SizeConst=16)] byte[] externalIPAddr);
+														   [In, MarshalAs(UnmanagedType.LPArray, SizeConst = MINIUPNPC_URL_MAXSIZE)] byte[] serviceType,
+														   [In, Out, MarshalAs(UnmanagedType.LPArray, SizeConst = 16)] byte[] externalIPAddr);
 
 		/// <summary>
 		/// Description forthcoming...
@@ -185,18 +204,18 @@ namespace TCMPortMapper
 		///		402 Invalid Args - See UPnP Device Architecture section on Control
 		///		713 SpecifiedArrayIndexInvalid - The specified array index is out of bounds
 		/// </returns>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int UPNP_GetGenericPortMappingEntry([In] String controlURL,
-		                                                         [In] String serviceType,
-		                                                         [In] [MarshalAs(UnmanagedType.LPArray, SizeConst=6)] byte[] index,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=6)] byte[] extPort,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=16)] byte[] intClient,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=6)] byte[] intPort,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=4)] byte[] protocol,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=80)] byte[] desc,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=6)] byte[] enabled,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=64)] byte[] rHost,
-		                                                         [MarshalAs(UnmanagedType.LPArray, SizeConst=16)] byte[] duration);
+																 [In] String serviceType,
+																 [In] [MarshalAs(UnmanagedType.LPArray, SizeConst = 6)] byte[] index,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 6)] byte[] extPort,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 16)] byte[] intClient,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 6)] byte[] intPort,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 4)] byte[] protocol,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 80)] byte[] desc,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 6)] byte[] enabled,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 64)] byte[] rHost,
+																 [MarshalAs(UnmanagedType.LPArray, SizeConst = 16)] byte[] duration);
 
 		/// <summary>
 		/// Adds a UPnP port mapping using the given information.
@@ -229,14 +248,14 @@ namespace TCMPortMapper
 		///		727 - ExternalPortOnlySupportsWildcard
 		///		      ExternalPort must be a wildcard and cannot be a specific port value
 		/// </returns>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int UPNP_AddPortMapping([In] String controlURL,
-		                                             [In] String serviceType,
-		                                             [In] String externalPort,
-		                                             [In] String internalPort,
-		                                             [In] String internalClient,
-		                                             [In] String description,
-		                                             [In] String protocol);
+													 [In] String serviceType,
+													 [In] String externalPort,
+													 [In] String internalPort,
+													 [In] String internalClient,
+													 [In] String description,
+													 [In] String protocol);
 
 		/// <summary>
 		/// Deletes a UPnP port mapping with the given information.
@@ -254,15 +273,15 @@ namespace TCMPortMapper
 		///		402 - Invalid Args
 		///		714 - NoSuchEntryInArray (Port Mapping doesn't exist)
 		/// </returns>
-		[DllImport("miniupnp.dll")]
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
 		public static extern int UPNP_DeletePortMapping([In] String controlURL,
-		                                                [In] String serviceType,
-		                                                [In] String externalPort,
-		                                                [In] String protocol);
+														[In] String serviceType,
+														[In] String externalPort,
+														[In] String protocol);
 
-		
+
 		#region Utility Methods
-		
+
 		public static UPNPDev PtrToUPNPDev(IntPtr devlistP)
 		{
 			return (UPNPDev)Marshal.PtrToStructure(devlistP, typeof(UPNPDev));
