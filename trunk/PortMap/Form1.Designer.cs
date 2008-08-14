@@ -40,6 +40,7 @@ namespace PortMap
 			this.statusColumn = new System.Windows.Forms.ColumnHeader();
 			this.publicPortColumn = new System.Windows.Forms.ColumnHeader();
 			this.progressPictureBox = new System.Windows.Forms.PictureBox();
+			this.refreshButton = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.progressPictureBox)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -168,17 +169,30 @@ namespace PortMap
 			// 
 			this.progressPictureBox.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
 			this.progressPictureBox.Image = global::PortMap.Properties.Resources.progress;
-			this.progressPictureBox.Location = new System.Drawing.Point(294, 279);
+			this.progressPictureBox.Location = new System.Drawing.Point(213, 279);
 			this.progressPictureBox.Name = "progressPictureBox";
 			this.progressPictureBox.Size = new System.Drawing.Size(16, 16);
 			this.progressPictureBox.TabIndex = 6;
 			this.progressPictureBox.TabStop = false;
+			// 
+			// refreshButton
+			// 
+			this.refreshButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.refreshButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.refreshButton.Location = new System.Drawing.Point(235, 275);
+			this.refreshButton.Name = "refreshButton";
+			this.refreshButton.Size = new System.Drawing.Size(75, 23);
+			this.refreshButton.TabIndex = 7;
+			this.refreshButton.Text = "Refresh";
+			this.refreshButton.UseVisualStyleBackColor = true;
+			this.refreshButton.Click += new System.EventHandler(this.refreshButton_Click);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(460, 310);
+			this.Controls.Add(this.refreshButton);
 			this.Controls.Add(this.progressPictureBox);
 			this.Controls.Add(this.mappingsListView);
 			this.Controls.Add(this.allUpnpButton);
@@ -186,7 +200,7 @@ namespace PortMap
 			this.Controls.Add(this.externalIPAddressLabel);
 			this.Controls.Add(this.removeButton);
 			this.Controls.Add(this.addButton);
-			this.MinimumSize = new System.Drawing.Size(300, 250);
+			this.MinimumSize = new System.Drawing.Size(350, 250);
 			this.Name = "Form1";
 			this.Text = "Port Map";
 			this.Load += new System.EventHandler(this.Form1_Load);
@@ -211,6 +225,7 @@ namespace PortMap
 		private System.Windows.Forms.ColumnHeader statusColumn;
 		private System.Windows.Forms.ColumnHeader publicPortColumn;
 		private System.Windows.Forms.PictureBox progressPictureBox;
+		private System.Windows.Forms.Button refreshButton;
 	}
 }
 
