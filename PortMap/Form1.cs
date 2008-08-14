@@ -166,6 +166,11 @@ namespace PortMap
 			}
 		}
 
+		private void refreshButton_Click(object sender, EventArgs e)
+		{
+			PortMapper.SharedInstance.Refresh();
+		}
+
 		private void allUpnpButton_Click(object sender, EventArgs e)
 		{
 			WindowManager.ShowAllMappingsForm();
