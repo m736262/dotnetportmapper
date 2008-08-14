@@ -66,7 +66,7 @@ namespace PortMap
 
 		private void Form1_Shown(object sender, EventArgs e)
 		{
-		//	DebugLog.WriteLine("Form1_Shown");
+		//	DebugLog.WriteLine("Form1: Form1_Shown");
 		}
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -105,8 +105,8 @@ namespace PortMap
 				}
 				else
 				{
-					externalIPAddressLabel.Text = "";
-					internalIPAddressLabel.Text = "Unknown";
+					externalIPAddressLabel.Text = "No Port Mapping Protocol Found";
+					internalIPAddressLabel.Text = "Router Information Unknown";
 				}
 			}
 			else
@@ -128,11 +128,11 @@ namespace PortMap
 			mappingsListView.BeginUpdate();
 			{
 				ListViewItem lvi = new ListViewItem(description);
-				lvi.Tag = pm;
 				lvi.SubItems.Add(pm.LocalPort.ToString());
 				lvi.SubItems.Add(pm.DesiredExternalPort.ToString());
 				lvi.SubItems.Add("");
 				lvi.SubItems.Add(pm.ExternalPort.ToString());
+				lvi.Tag = pm;
 
 				mappings.Add(lvi);
 				mappingsListView.VirtualListSize = mappings.Count;
@@ -181,7 +181,7 @@ namespace PortMap
 
 		private void PortMapper_WillStartSearchForRouter(PortMapper sender)
 		{
-			Console.WriteLine("PortMapper_WillStartSearchForRouter");
+			DebugLog.WriteLine("Form1: PortMapper_WillStartSearchForRouter");
 
 			progressPictureBox.Visible = true;
 
@@ -191,7 +191,7 @@ namespace PortMap
 
 		private void PortMapper_DidFinishSearchForRouter(PortMapper sender)
 		{
-			Console.WriteLine("PortMapper_DidFinishSearchForRouter");
+			DebugLog.WriteLine("Form1: PortMapper_DidFinishSearchForRouter");
 
 			progressPictureBox.Visible = false;
 
@@ -203,21 +203,23 @@ namespace PortMap
 			{
 				allUpnpButton.Enabled = false;
 			}
+
+			UpdateTagLine();
 		}
 
 		private void PortMapper_DidStartWork(PortMapper sender)
 		{
-			Console.WriteLine("PortMapper_DidStartWork");
+			DebugLog.WriteLine("Form1: PortMapper_DidStartWork");
 		}
 
 		private void PortMapper_DidFinishWork(PortMapper sender)
 		{
-			Console.WriteLine("PortMapper_DidFinishWork");
+			DebugLog.WriteLine("Form1: PortMapper_DidFinishWork");
 		}
 
 		private void PortMapper_DidChangeMappingStatus(PortMapper sender, PortMapping pm)
 		{
-			Console.WriteLine("PortMapper_DidChangeMappingStatus");
+			DebugLog.WriteLine("Form1: PortMapper_DidChangeMappingStatus");
 
 			foreach (ListViewItem lvi in mappings)
 			{
@@ -231,7 +233,7 @@ namespace PortMap
 
 		private void PortMapper_ExternalIPAddressDidChange(PortMapper sender, System.Net.IPAddress ip)
 		{
-			Console.WriteLine("PortMapper_ExternalIPAddressDidChange");
+			DebugLog.WriteLine("Form1: PortMapper_ExternalIPAddressDidChange");
 
 			UpdateTagLine();
 		}
