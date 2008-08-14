@@ -790,16 +790,34 @@ namespace TCMPortMapper
 
 		private void AddSystemEventDelegates()
 		{
-			SystemEvents.PowerModeChanged += new PowerModeChangedEventHandler(SystemEvents_PowerModeChanged);
-			NetworkChange.NetworkAddressChanged += new NetworkAddressChangedEventHandler(NetworkChange_NetworkAddressChanged);
-			NetworkChange.NetworkAvailabilityChanged += new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
+			try
+			{
+				SystemEvents.PowerModeChanged += new PowerModeChangedEventHandler(SystemEvents_PowerModeChanged);
+				NetworkChange.NetworkAddressChanged += new NetworkAddressChangedEventHandler(NetworkChange_NetworkAddressChanged);
+				NetworkChange.NetworkAvailabilityChanged += new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
+			}
+			catch (Exception e)
+			{
+				// I have no idea why this throws exceptions on some computers.
+				// As a windows developer, it doesn't really surprise me though.
+				DebugLog.WriteLine("PortMapper: AddSystemEventDelegates: {0}", e);
+			}
 		}
 
 		private void RemoveSystemEventDelegates()
 		{
-			SystemEvents.PowerModeChanged -= new PowerModeChangedEventHandler(SystemEvents_PowerModeChanged);
-			NetworkChange.NetworkAddressChanged -= new NetworkAddressChangedEventHandler(NetworkChange_NetworkAddressChanged);
-			NetworkChange.NetworkAvailabilityChanged -= new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
+			try
+			{
+				SystemEvents.PowerModeChanged -= new PowerModeChangedEventHandler(SystemEvents_PowerModeChanged);
+				NetworkChange.NetworkAddressChanged -= new NetworkAddressChangedEventHandler(NetworkChange_NetworkAddressChanged);
+				NetworkChange.NetworkAvailabilityChanged -= new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
+			}
+			catch (Exception e)
+			{
+				// I have no idea why this throws exceptions on some computers.
+				// As a windows developer, it doesn't really surprise me though.
+				DebugLog.WriteLine("PortMapper: RemoveSystemEventDelegates: {0}", e);
+			}
 		}
 
 		private void AddNATPMPDelegates()
