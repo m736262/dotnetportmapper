@@ -70,8 +70,10 @@ namespace TCMPortMapper
 
 		public NATPMPPortMapper()
 		{
+			// Until I find a way around this bug, there's no reason to setup the udp client...
+
 			// Add UDP listener for public ip update packets
-			udpClient = new UdpClient(5351);
+			// udpClient = new UdpClient(5351);
 
 			// Note: The following code throws an exception for some reason.
 			// The JoinMulticastGroup works fine for every multicast address except 224.0.0.1
@@ -81,7 +83,7 @@ namespace TCMPortMapper
 			// So basically, the udpClient won't be receiving anything.
 			// I consider this to be a bug in Windows and/or .Net.
 			
-			udpClient.BeginReceive(new AsyncCallback(udpClient_DidReceive), null);
+			// udpClient.BeginReceive(new AsyncCallback(udpClient_DidReceive), null);
 		}
 
 		public void Refresh()
