@@ -4,7 +4,7 @@ using System.IO;
 
 namespace TCMPortMapper
 {
-	abstract class OutputLog
+	public abstract class OutputLog
 	{
 		protected const String F = "yyyy-MM-dd HH:mm:ss";
 
@@ -14,7 +14,7 @@ namespace TCMPortMapper
 		}
 	}
 
-	class DebugLog : OutputLog
+	public class DebugLog : OutputLog
 	{
 		[Conditional("DEBUG")]
 		public static void Write(String format, params Object[] args)
