@@ -191,7 +191,7 @@ namespace TCMPortMapper
 
 				Monitor.Enter(multiThreadLock);
 
-				UpdateExistingUPnPPortMappings();
+				DoUpdateExistingUPnPPortMappings();
 
 				List<PortMapping> mappingsToRemove = PortMapper.SharedInstance.PortMappingsToRemove;
 				lock (mappingsToRemove)
@@ -224,6 +224,17 @@ namespace TCMPortMapper
 				}
 
 				Monitor.Exit(multiThreadLock);
+			}
+		}
+
+		public void UpdateExistingUPnPPortMappings()
+		{
+			// All public API methods are wrapped in a single thread lock.
+			// This frees users to invoke the public API from multiple threads, but provides us a bit of sanity.
+			lock (singleThreadLock)
+			{
+				Thread bgThread = new Thread(new ThreadStart(UpdateExistingUPnPMappingsThread));
+				bgThread.Start();
 			}
 		}
 
@@ -296,7 +307,7 @@ namespace TCMPortMapper
 			return machineName + "/" + userName + "/" + processName + "/" + processId;
 		}
 
-		private void UpdateExistingUPnPPortMappings()
+		private void DoUpdateExistingUPnPPortMappings()
 		{
 			List<ExistingUPnPPortMapping> existingMappings = new List<ExistingUPnPPortMapping>();
 
@@ -574,6 +585,33 @@ namespace TCMPortMapper
 			return (udpResult && tcpResult);
 		}
 
+		private bool RemovePortMapping(ExistingUPnPPortMapping portMapping)
+		{
+			int result;
+
+			bool udpResult = true;
+			bool tcpResult = true;
+
+			String extPortStr = portMapping.ExternalPort.ToString();
+
+			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.UDP) > 0)
+			{
+				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+
+				DebugLog.WriteLine("UPnP: RemovePortMapping: UDP: result = {0}", result);
+				udpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
+			}
+			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.TCP) > 0)
+			{
+				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+
+				DebugLog.WriteLine("UPnP: RemovePortMapping: TCP: result = {0}", result);
+				tcpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
+			}
+
+			return (udpResult && tcpResult);
+		}
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		#endregion
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -593,7 +631,7 @@ namespace TCMPortMapper
 			
 			bool didFail = false;
 
-			devlistP = MiniUPnP.upnpDiscover(3000, IntPtr.Zero, IntPtr.Zero);
+			devlistP = MiniUPnP.upnpDiscover(2000, IntPtr.Zero, IntPtr.Zero);
 			if (devlistP == IntPtr.Zero)
 			{
 				DebugLog.WriteLine("UPnP: No IDG Device found on the network (1)");
@@ -768,11 +806,28 @@ namespace TCMPortMapper
 			Monitor.Enter(multiThreadLock);
 			OnDidBeginWorking();
 
+			// Remove existing mappings scheduled for removal.
+			// These are mappings that weren't created by us, but have been explicity set for removal.
+
+			List<ExistingUPnPPortMapping> existingMappingsToRemove;
+			existingMappingsToRemove = PortMapper.SharedInstance.ExistingUPnPPortMappingsToRemove;
+			lock (existingMappingsToRemove)
+			{
+				while ((existingMappingsToRemove.Count > 0) && (updatePortMappingsThreadFlags == ThreadFlags.None))
+				{
+					ExistingUPnPPortMapping existingMappingToRemove = existingMappingsToRemove[0];
+
+					RemovePortMapping(existingMappingToRemove);
+
+					existingMappingsToRemove.RemoveAt(0);
+				}
+			}
+
 			// We need to safeguard mappings that others might have made.
 			// UPnP is quite generous in giving us what we want,
 			// even if other mappings are there, especially from the same local machine.
 
-			UpdateExistingUPnPPortMappings();
+			DoUpdateExistingUPnPPortMappings();
 
 			// Remove mappings scheduled for removal
 
@@ -830,6 +885,25 @@ namespace TCMPortMapper
 				}
 			}
 
+			OnDidEndWorking();
+		}
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		#endregion
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		#region Update Existing UPnP Port Mappings Thread
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		private void UpdateExistingUPnPMappingsThread()
+		{
+			Monitor.Enter(multiThreadLock);
+			OnDidBeginWorking();
+
+			DoUpdateExistingUPnPPortMappings();
+
+			Monitor.Exit(multiThreadLock);
 			OnDidEndWorking();
 		}
 

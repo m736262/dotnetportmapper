@@ -156,6 +156,8 @@ namespace TCMPortMapper
 		private List<PortMapping> portMappings;         // Active mappings, and mappings to add
 		private List<PortMapping> portMappingsToRemove; // Active mappings that should be removed
 
+		private List<ExistingUPnPPortMapping> existingUPnPPortMappingsToRemove;
+
 		private volatile bool isRunning;
 
 		private MappingStatus natpmpStatus;
@@ -186,6 +188,8 @@ namespace TCMPortMapper
 
 			portMappings = new List<PortMapping>();
 			portMappingsToRemove = new List<PortMapping>();
+
+			existingUPnPPortMappingsToRemove = new List<ExistingUPnPPortMapping>();
 		}
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,6 +251,7 @@ namespace TCMPortMapper
 			// This lock is also used within public API methods,
 			// so if we don't use a background thread, there's a potential for deadlock.
 			Thread bgThread = new Thread(new ParameterizedThreadStart(OnDidChangeMappingStatusThread));
+			bgThread.IsBackground = true;
 			bgThread.Start(pm);
 		}
 
@@ -423,12 +428,23 @@ namespace TCMPortMapper
 
 		public List<PortMapping> PortMappings
 		{
+			// This property should maybe be internal instead of public...
+
 			get { return portMappings; }
 		}
 
 		public List<PortMapping> PortMappingsToRemove
 		{
+			// This property should maybe be internal instead of public...
+
 			get { return portMappingsToRemove; }
+		}
+
+		public List<ExistingUPnPPortMapping> ExistingUPnPPortMappingsToRemove
+		{
+			// This property should maybe be internal instead of public...
+
+			get { return existingUPnPPortMappingsToRemove; }
 		}
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -468,7 +484,10 @@ namespace TCMPortMapper
 		/// <summary>
 		/// Asynchronously adds the given port mapping.
 		/// </summary>
-		/// <param name="pm"></param>
+		/// <param name="pm">
+		///		The port mapping to add.
+		///		Note: Many UPnP routers only support port mappings where localPort == externalPort.
+		///	</param>
 		public void AddPortMapping(PortMapping pm)
 		{
 			if(pm == null) return;
@@ -488,7 +507,9 @@ namespace TCMPortMapper
 		/// <summary>
 		/// Asynchronously removes the given port mapping.
 		/// </summary>
-		/// <param name="pm"></param>
+		/// <param name="pm">
+		///		The port mapping to remove.
+		/// </param>
 		public void RemovePortMapping(PortMapping pm)
 		{
 			if(pm == null) return;
@@ -509,6 +530,39 @@ namespace TCMPortMapper
 					}
 				}
 				if (isRunning) UpdatePortMappings();
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously removes the given port mapping.
+		/// 
+		/// This method will also automatically refresh the UPnP mapping table,
+		/// and call the DidReceiveUPNPMappingTable delegate.
+		/// </summary>
+		/// <param name="pm">
+		///		The port mapping to remove.
+		///	</param>
+		public void RemovePortMapping(ExistingUPnPPortMapping pm)
+		{
+			if(pm == null) return;
+
+			// All public API methods are wrapped in a single thread lock.
+			// This frees users to invoke the public API from multiple threads, but provides us a bit of sanity.
+			lock (singleThreadLock)
+			{
+				if (upnpStatus == MappingStatus.Works)
+				{
+					lock (existingUPnPPortMappingsToRemove)
+					{
+						existingUPnPPortMappingsToRemove.Add(pm);
+					}
+
+					if (isRunning)
+					{
+						requestedUPnPMappingTable = true;
+						UpdatePortMappings();
+					}
+				}
 			}
 		}
 
@@ -540,7 +594,7 @@ namespace TCMPortMapper
 					if (upnpStatus == MappingStatus.Works)
 					{
 						requestedUPnPMappingTable = true;
-						upnpPortMapper.UpdatePortMappings();
+						upnpPortMapper.UpdateExistingUPnPPortMappings();
 					}
 				}
 			}
