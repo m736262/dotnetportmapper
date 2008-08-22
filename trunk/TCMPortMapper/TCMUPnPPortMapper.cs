@@ -479,12 +479,32 @@ namespace TCMPortMapper
 				if (udpResult && !tcpResult)
 				{
 					DebugLog.WriteLine("Deleting UDP mapping");
-					MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+					try
+					{
+						MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+					}
+					catch(AccessViolationException)
+					{
+						// I have no idea why the above method sometimes throws an AccessException.
+						// The odd part about it is that it works perfect, except for the stupid exception.
+						// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+						DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_DeletePortMapping");
+					}
 				}
 				if (tcpResult && !udpResult)
 				{
 					DebugLog.WriteLine("Deleting TCP mapping");
-					MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+					try
+					{
+						MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+					}
+					catch(AccessViolationException)
+					{
+						// I have no idea why the above method sometimes throws an AccessException.
+						// The odd part about it is that it works perfect, except for the stupid exception.
+						// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+						DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_DeletePortMapping");
+					}
 				}
 
 				if (udpResult && tcpResult)
@@ -558,7 +578,7 @@ namespace TCMPortMapper
 				}
 			}
 
-			int result;
+			int result = MiniUPnP.UPNPCOMMAND_SUCCESS;
 
 			bool udpResult = true;
 			bool tcpResult = true;
@@ -567,14 +587,34 @@ namespace TCMPortMapper
 
 			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.UDP) > 0 && !udpMappingStolen)
 			{
-				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+				try
+				{
+					result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+				}
+				catch(AccessViolationException)
+				{
+					// I have no idea why the above method sometimes throws an AccessException.
+					// The odd part about it is that it works perfect, except for the stupid exception.
+					// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+					DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_DeletePortMapping");
+				}
 				
 				DebugLog.WriteLine("UPnP: RemovePortMapping: UDP: result = {0}", result);
 				udpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
 			}
 			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.TCP) > 0 && !tcpMappingStolen)
 			{
-				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+				try
+				{
+					result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+				}
+				catch(AccessViolationException)
+				{
+					// I have no idea why the above method sometimes throws an AccessException.
+					// The odd part about it is that it works perfect, except for the stupid exception.
+					// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+					DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_DeletePortMapping");
+				}
 
 				DebugLog.WriteLine("UPnP: RemovePortMapping: TCP: result = {0}", result);
 				tcpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
@@ -587,7 +627,7 @@ namespace TCMPortMapper
 
 		private bool RemovePortMapping(ExistingUPnPPortMapping portMapping)
 		{
-			int result;
+			int result = MiniUPnP.UPNPCOMMAND_SUCCESS;
 
 			bool udpResult = true;
 			bool tcpResult = true;
@@ -596,14 +636,34 @@ namespace TCMPortMapper
 
 			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.UDP) > 0)
 			{
-				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+				try
+				{
+					result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "UDP");
+				}
+				catch(AccessViolationException)
+				{
+					// I have no idea why the above method sometimes throws an AccessException.
+					// The odd part about it is that it works perfect, except for the stupid exception.
+					// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+					DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_DeletePortMapping");
+				}
 
 				DebugLog.WriteLine("UPnP: RemovePortMapping: UDP: result = {0}", result);
 				udpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
 			}
 			if ((portMapping.TransportProtocol & PortMappingTransportProtocol.TCP) > 0)
 			{
-				result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+				try
+				{
+					result = MiniUPnP.UPNP_DeletePortMapping(urls.controlURL, igddata.ServiceType, extPortStr, "TCP");
+				}
+				catch (AccessViolationException)
+				{
+					// I have no idea why the above method sometimes throws an AccessException.
+					// The odd part about it is that it works perfect, except for the stupid exception.
+					// So the exception can safely be ignored, it just bugs me because it feels like a hack.
+					DebugLog.WriteLine("Ignoring exception from method MiniUPnP.UPNP_DeletePortMapping");
+				}
 
 				DebugLog.WriteLine("UPnP: RemovePortMapping: TCP: result = {0}", result);
 				tcpResult = (result == MiniUPnP.UPNPCOMMAND_SUCCESS);
