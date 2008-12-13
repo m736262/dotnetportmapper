@@ -164,7 +164,8 @@ namespace TCMPortMapper
 		private MappingStatus upnpStatus;
 		private MappingProtocol mappingProtocol;
 
-		private String routerName;
+		private String routerManufacturer;
+		private IPAddress routerIPAddress;
 		private IPAddress localIPAddress;
 		private IPAddress externalIPAddress;
 
@@ -362,15 +363,19 @@ namespace TCMPortMapper
 		{
 			System.ComponentModel.ISynchronizeInvoke invokeable = GetInvokeObject();
 
-			if (invokeable != null)
+			try
 			{
-				return invokeable.Invoke(method, args);
-			}
+				if (invokeable != null)
+				{
+					return invokeable.Invoke(method, args);
+				}
 
-			if (mAllowMultithreadedCallbacks)
-			{
-				return method.DynamicInvoke(args);
+				if (mAllowMultithreadedCallbacks)
+				{
+					return method.DynamicInvoke(args);
+				}
 			}
+			catch { }
 
 			return null;
 		}
@@ -398,14 +403,14 @@ namespace TCMPortMapper
 			get { return externalIPAddress; }
 		}
 
-		public String RouterName
+		public String RouterManufacturer
 		{
-			get { return routerName; }
+			get { return routerManufacturer; }
 		}
 
 		public IPAddress RouterIPAddress
 		{
-			get { return GetRouterIPAddress(); }
+			get { return routerIPAddress; }
 		}
 
 		public String MappingProtocolName
@@ -426,24 +431,26 @@ namespace TCMPortMapper
 			get { return System.Net.Dns.GetHostName() + ".local"; }
 		}
 
-		public List<PortMapping> PortMappings
-		{
-			// This property should maybe be internal instead of public...
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		#endregion
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		#region Internal Properties
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		internal List<PortMapping> PortMappings
+		{
 			get { return portMappings; }
 		}
 
-		public List<PortMapping> PortMappingsToRemove
+		internal List<PortMapping> PortMappingsToRemove
 		{
-			// This property should maybe be internal instead of public...
-
 			get { return portMappingsToRemove; }
 		}
 
-		public List<ExistingUPnPPortMapping> ExistingUPnPPortMappingsToRemove
+		internal List<ExistingUPnPPortMapping> ExistingUPnPPortMappingsToRemove
 		{
-			// This property should maybe be internal instead of public...
-
 			get { return existingUPnPPortMappingsToRemove; }
 		}
 
@@ -676,7 +683,6 @@ namespace TCMPortMapper
 			{
 				IncreaseWorkCount();
 
-				routerName = "Unknown";
 				mappingProtocol = MappingProtocol.None;
 				externalIPAddress = null;
 
@@ -694,22 +700,32 @@ namespace TCMPortMapper
 
 				OnWillStartSearchForRouter();
 
-				IPAddress routerAddress = GetRouterIPAddress();
-				if (routerAddress != null)
-				{
-					String manufacturer = GetRouterManufacturer();
-					if (!String.IsNullOrEmpty(manufacturer))
-					{
-						routerName = manufacturer;
-					}
+				DebugLog.WriteLine("RefreshThread");
 
-					// Make sure local IP address is up to data
-					UpdateLocalIPAddress();
+				// Update all the following variables:
+				// - routerIPAddress
+				// - routerManufacturer
+				// - localIPAddress
+				// - localIPAddressOnSubnet
+				// 
+				// Note: The order in which we call the following methods matters.
+				// We must update the routerIPAddress before the others.
+				UpdateRouterIPAddress();
+				UpdateRouterManufacturer();
+				UpdateLocalIPAddress();
+
+				DebugLog.WriteLine("routerIPAddress       : {0}", routerIPAddress);
+				DebugLog.WriteLine("routerManufacturer    : {0}", routerManufacturer);
+				DebugLog.WriteLine("localIPAddress        : {0}", localIPAddress);
+				DebugLog.WriteLine("localIPAddressOnSubnet: {0}", localIPOnRouterSubnet);
+
+				if (routerIPAddress != null)
+				{
 					if ((localIPAddress != null) && localIPOnRouterSubnet)
 					{
 						externalIPAddress = null;
 
-						if (IsIPv4AddressInPrivateSubnet(routerAddress))
+						if (IsIPv4AddressInPrivateSubnet(routerIPAddress))
 						{
 							natpmpStatus = MappingStatus.Trying;
 							upnpStatus = MappingStatus.Trying;
@@ -763,6 +779,88 @@ namespace TCMPortMapper
 		#region Private API
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+		/// <summary>
+		/// Updates the routerIPAddress variable.
+		/// </summary>
+		private void UpdateRouterIPAddress()
+		{
+			routerIPAddress = null;
+
+			NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+			bool found = false;
+			for (int i = 0; i < networkInterfaces.Length && !found; i++)
+			{
+				NetworkInterface networkInterface = networkInterfaces[i];
+
+				if (networkInterface.OperationalStatus == OperationalStatus.Up)
+				{
+					GatewayIPAddressInformationCollection gateways;
+					gateways = networkInterface.GetIPProperties().GatewayAddresses;
+
+					for (int j = 0; j < gateways.Count && !found; j++)
+					{
+						GatewayIPAddressInformation gatewayInfo = gateways[j];
+
+						if (gatewayInfo.Address.AddressFamily == AddressFamily.InterNetwork)
+						{
+							if (!gatewayInfo.Address.Equals(IPAddress.Any))
+							{
+								routerIPAddress = gatewayInfo.Address;
+								found = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Updates the routerManufacturer variable.
+		/// This is done by getting the MAC address of the router,
+		/// and then looking up the corresponding manufacturer in the OUI list.
+		/// 
+		/// The routerIPAddress variable should be set prior to calling this method.
+		/// </summary>
+		private void UpdateRouterManufacturer()
+		{
+			DebugLog.WriteLine("UpdateRouterManufacturer()");
+
+			routerManufacturer = "Unknown";
+
+			if (routerIPAddress == null)
+			{
+				return;
+			}
+
+			Exception e;
+
+			PhysicalAddress routerMac = GetHardwareAddressForIPv4Address(routerIPAddress, out e);
+			if (routerMac == null)
+			{
+				DebugLog.WriteLine("PortMapper: Error getting router mac address: {0}", e);
+				return;
+			}
+
+			String result = GetManufacturerForHardwareAddress(routerMac, out e);
+			if (result == null)
+			{
+				if (e == null)
+					DebugLog.WriteLine("PortMapper: Router MAC address not in OUI list");
+				else
+					DebugLog.WriteLine("PortMapper: Error getting router manufacturer: {0}", e);
+			}
+			else
+			{
+				routerManufacturer = result;
+			}
+		}
+
+		/// <summary>
+		/// Updates the localIPAddress variable, and the related localIPOnRouterSubnet variable.
+		/// 
+		/// The routerIPAddress variable should be set prior to calling this method.
+		/// </summary>
 		private void UpdateLocalIPAddress()
 		{
 			localIPAddress = null;
@@ -777,8 +875,7 @@ namespace TCMPortMapper
 				}
 			}
 
-			IPAddress routerAddress = GetRouterIPAddress();
-			if (routerAddress != null)
+			if (routerIPAddress != null)
 			{
 				localIPOnRouterSubnet = IsIPv4AddressInPrivateSubnet(localIPAddress);
 			}
@@ -788,6 +885,9 @@ namespace TCMPortMapper
 			}
 		}
 
+		/// <summary>
+		/// Registers for notifications of power and network events.
+		/// </summary>
 		private void AddSystemEventDelegates()
 		{
 			try
@@ -804,6 +904,9 @@ namespace TCMPortMapper
 			}
 		}
 
+		/// <summary>
+		/// Unregisters for notifications of power and network events.
+		/// </summary>
 		private void RemoveSystemEventDelegates()
 		{
 			try
@@ -868,64 +971,36 @@ namespace TCMPortMapper
 			}
 		}
 
-		private IPAddress GetRouterIPAddress()
-		{
-			UInt32 routerAddr = 0;
-			if (NATPMP.getdefaultgateway(ref routerAddr) < 0)
-			{
-				DebugLog.WriteLine("PortMapper: Unable to get router ip address");
-				return null;
-			}
-
-			try
-			{
-				return new IPAddress((long)routerAddr);
-			}
-			catch (Exception e)
-			{
-				DebugLog.WriteLine("PortMapper: Unable to get router ip address: {0}", e);
-				return null;
-			}
-		}
-
-		private PhysicalAddress GetRouterPhysicalAddress()
-		{
-			IPAddress routerIP = GetRouterIPAddress();
-			if (routerIP == null)
-			{
-				return null;
-			}
-
-			Exception e;
-			PhysicalAddress routerMac = GetHardwareAddressForIPv4Address(routerIP, out e);
-			if (routerMac == null)
-			{
-				DebugLog.WriteLine("PortMapper: Error getting router mac address: {0}", e);
-			}
-
-			return routerMac;
-		}
-
-		private String GetRouterManufacturer()
-		{
-			PhysicalAddress routerMac = GetRouterPhysicalAddress();
-			if (routerMac == null)
-			{
-				return null;
-			}
-
-			Exception e;
-			String routerName = GetManufacturerForHardwareAddress(routerMac, out e);
-			if (routerName == null)
-			{
-				if(e == null)
-					DebugLog.WriteLine("PortMapper: Router MAC address not in OUI list");
-				else
-					DebugLog.WriteLine("PortMapper: Error getting router manufacturer: {0}", e);
-			}
-
-			return routerName;
-		}
+		/// <summary>
+		/// Called from:
+		///  - RefreshThread
+		///  - UpdateLocalIPAddress - RefreshThread
+		///  - GetRouterPhysicalAddress - GetRouterManufacturer - RefreshThread
+		/// 
+		///  - RouterIPAddress property
+		/// 
+		///  - natpmpPortMapper_DidReceiveBroadcastExternalIPChange
+		/// </summary>
+		/// <returns></returns>
+//		private IPAddress GetRouterIPAddress()
+//		{
+//			UInt32 routerAddr = 0;
+//			if (NATPMP.getdefaultgateway(ref routerAddr) < 0)
+//			{
+//				DebugLog.WriteLine("PortMapper: Unable to get router ip address");
+//				return null;
+//			}
+//			
+//			try
+//			{
+//				return new IPAddress((long)routerAddr);
+//			}
+//			catch (Exception e)
+//			{
+//				DebugLog.WriteLine("PortMapper: Unable to get router ip address: {0}", e);
+//				return null;
+//			}
+//		}
 
 		private void IncreaseWorkCount()
 		{
@@ -1024,7 +1099,9 @@ namespace TCMPortMapper
 		{
 			if (isRunning)
 			{
-				if (senderIP == GetRouterIPAddress())
+				DebugLog.WriteLine("natpmpPortMapper_DidReceiveBroadcastExternalIPChange");
+
+				if (senderIP == localIPAddress)
 				{
 					DebugLog.WriteLine("Refreshing because of NAT-PMP device external IP broadcast");
 					Refresh();
@@ -1193,6 +1270,12 @@ namespace TCMPortMapper
 			return false;
 		}
 
+		/// <summary>
+		/// Only called from GetRouterPhysicalAddress()
+		/// </summary>
+		/// <param name="ip"></param>
+		/// <param name="e"></param>
+		/// <returns></returns>
 		private PhysicalAddress GetHardwareAddressForIPv4Address(IPAddress ip, out Exception e)
 		{
 			if (ip == null)

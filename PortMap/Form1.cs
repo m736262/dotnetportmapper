@@ -98,7 +98,7 @@ namespace PortMap
 
 					String text = String.Format("{0} - {1} - {2}",
 												PortMapper.SharedInstance.MappingProtocolName,
-												PortMapper.SharedInstance.RouterName,
+												PortMapper.SharedInstance.RouterManufacturer,
 												PortMapper.SharedInstance.LocalIPAddress);
 
 					internalIPAddressLabel.Text = text;

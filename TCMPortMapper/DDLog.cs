@@ -6,7 +6,7 @@ namespace TCMPortMapper
 {
 	public abstract class OutputLog
 	{
-		protected const String F = "yyyy-MM-dd HH:mm:ss";
+		protected const String F = "yyyy-MM-dd HH:mm:ss:fff";
 
 		protected static String Timestamp()
 		{
