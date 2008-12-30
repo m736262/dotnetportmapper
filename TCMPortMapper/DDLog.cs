@@ -20,7 +20,7 @@ namespace TCMPortMapper
 		public static void Write(String format, params Object[] args)
 		{
 			String partMessage = String.Format(format, args);
-			String fullMessage = String.Format("D:{0}:  {1}", Timestamp(), partMessage);
+			String fullMessage = String.Format("{0}:  {1}", Timestamp(), partMessage);
 			Debug.Write(fullMessage);
 		}
 
@@ -30,7 +30,7 @@ namespace TCMPortMapper
 			if (flag)
 			{
 				String partMessage = String.Format(format, args);
-				String fullMessage = String.Format("D:{0}:  {1}", Timestamp(), partMessage);
+				String fullMessage = String.Format("{0}:  {1}", Timestamp(), partMessage);
 				Debug.Write(fullMessage);
 			}
 		}
@@ -39,7 +39,7 @@ namespace TCMPortMapper
 		public static void WriteLine(String format, params Object[] args)
 		{
 			String partMessage = String.Format(format, args);
-			String fullMessage = String.Format("D:{0}:  {1}", Timestamp(), partMessage);
+			String fullMessage = String.Format("{0}:  {1}", Timestamp(), partMessage);
 			Debug.WriteLine(fullMessage);
 		}
 
@@ -49,7 +49,7 @@ namespace TCMPortMapper
 			if (flag)
 			{
 				String partMessage = String.Format(format, args);
-				String fullMessage = String.Format("D:{0}:  {1}", Timestamp(), partMessage);
+				String fullMessage = String.Format("{0}:  {1}", Timestamp(), partMessage);
 				Debug.WriteLine(fullMessage);
 			}
 		}
