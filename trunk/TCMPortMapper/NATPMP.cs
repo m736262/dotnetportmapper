@@ -78,8 +78,8 @@ namespace TCMPortMapper
 			public newportmapping pnu_newportmapping;
 		}
 
-		[DllImport("natpmp.dll")]
-		public static extern int getdefaultgateway([In, Out] ref UInt32 addr);
+	//	[DllImport("natpmp.dll")]
+	//	public static extern int getdefaultgateway([In, Out] ref UInt32 addr);
 
 		[DllImport("natpmp.dll")]
 		public static extern int initnatpmp([In, Out] ref natpmp_t p);
