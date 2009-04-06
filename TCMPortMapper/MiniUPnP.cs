@@ -35,6 +35,19 @@ namespace TCMPortMapper
 			public String controlURL_CIF;
 		}
 
+		/// <summary>
+		/// This structure is used to avoid a SystemAccessViolation,
+		/// and to prevent corruption of the process' memory.
+		/// See issue #2 for further discussion.
+		/// </summary>
+		[StructLayout(LayoutKind.Sequential)]
+		public unsafe struct UPNPUrls_2
+		{
+			public char *controlURL;
+			public char *ipcondescURL;
+			public char *controlURL_CIF;
+		}
+
 		[StructLayout(LayoutKind.Sequential, Size = 1796, CharSet = CharSet.Ansi)]
 		public struct IGDdatas
 		{
@@ -42,12 +55,12 @@ namespace TCMPortMapper
 			private String cureltname;
 
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
-			private String urlbase;
+			public String urlbase;
 
 			private Int32 level;
 
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
-			private String controlurl_CIF;
+			public String controlurl_CIF;
 
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String eventsuburl_CIF;
@@ -59,13 +72,13 @@ namespace TCMPortMapper
 			private String servicetype_CIF;
 
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
-			private String controlurl;
+			public String controlurl;
 
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String eventsuburl;
 
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
-			private String scpdurl;
+			public String scpdurl;
 			
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MINIUPNPC_URL_MAXSIZE)]
 			private String serviceType;
@@ -150,11 +163,14 @@ namespace TCMPortMapper
 		/// <param name="lanAddrLength"></param>
 		/// <returns></returns>
 		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
-		public static extern int UPNP_GetIGDFromUrl([In] String rootDescUrl,
-													[In, Out] ref UPNPUrls urls,
-													[In, Out] ref IGDdatas datas,
-													[MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] lanAddr,
-													[In] int lanAddrLength);
+		public unsafe static extern int UPNP_GetIGDFromUrl([In] String rootDescUrl,
+		                                                   [In] UPNPUrls_2 *urls,
+		                                                   [In, Out] ref IGDdatas datas,
+		                                                   [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] byte[] lanAddr,
+		                                                   [In] int lanAddrLength);
+
+		[DllImport("miniupnp.dll", CallingConvention = CallingConvention.Cdecl)]
+		public unsafe static extern void FreeUPNPUrls([In] UPNPUrls_2 *urls);
 
 		/// <summary>
 		/// Extracts the external IP address.
