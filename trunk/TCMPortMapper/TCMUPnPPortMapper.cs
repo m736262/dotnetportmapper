@@ -691,7 +691,7 @@ namespace TCMPortMapper
 			
 			bool didFail = false;
 
-			devlistP = MiniUPnP.upnpDiscover(2000, IntPtr.Zero, IntPtr.Zero);
+			devlistP = MiniUPnP.upnpDiscover(2500, IntPtr.Zero, IntPtr.Zero);
 			if (devlistP == IntPtr.Zero)
 			{
 				DebugLog.WriteLine("UPnP: No IDG Device found on the network (1)");
@@ -750,13 +750,23 @@ namespace TCMPortMapper
 					DebugLog.WriteLine("UPnP: Trying URL: {0}", url);
 
 					// Reset service type.
-					// This will help us determine of the exception below can safely be ignored.
+					// This will help us determine if the exception below can safely be ignored.
 					igddata.ServiceType = null;
 
 					int r = 0;
 					try
 					{
-						r = MiniUPnP.UPNP_GetIGDFromUrl(url, ref urls, ref igddata, lanAddr, lanAddr.Length);
+					//	r = MiniUPnP.UPNP_GetIGDFromUrl(url, ref urls, ref igddata, lanAddr, lanAddr.Length);
+
+						MiniUPnP.UPNPUrls_2 urls_2 = new MiniUPnP.UPNPUrls_2();
+						unsafe
+						{
+							r = MiniUPnP.UPNP_GetIGDFromUrl(url, &urls_2, ref igddata, lanAddr, lanAddr.Length);
+							MiniUPnP.FreeUPNPUrls(&urls_2);
+						}
+
+						// Find urls
+						GetUPNPUrls(url);
 					}
 					catch(AccessViolationException)
 					{
@@ -851,6 +861,25 @@ namespace TCMPortMapper
 				}
 			}
 			OnDidEndWorking();
+		}
+
+		private void GetUPNPUrls(String url)
+		{
+			if (String.IsNullOrEmpty(igddata.urlbase))
+				urls.ipcondescURL = url;
+			else
+				urls.ipcondescURL = igddata.urlbase;
+
+			int index_fin_url = urls.ipcondescURL.IndexOf('/', 7); // 7 = http://
+
+			if (index_fin_url >= 0)
+			{
+				urls.ipcondescURL = urls.ipcondescURL.Substring(0, index_fin_url);
+			}
+
+			urls.controlURL = urls.ipcondescURL + igddata.controlurl;
+			urls.controlURL_CIF = urls.ipcondescURL + igddata.controlurl_CIF;
+			urls.ipcondescURL += igddata.scpdurl;
 		}
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////
